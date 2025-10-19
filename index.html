@@ -433,7 +433,7 @@ hr {
         async function openPiP() {
             try {
                 pipWindow = await documentPictureInPicture.requestWindow({ width: 480, height: 520 });
-            } catch (e) { alert("Erro PiP - Atualmente só o Chrome/Edge 116+ e derivados em desktops suportam essa API experimental. Firefox, Safari, outros navegadores e navegadores móveis (Android/iPhone) ainda não têm suporte. Se você usa outro navegador, o erro “Erro PiP” vai aparecer. Se não é o seu caso, reporte o erro."); return; }
+            } catch (e) { alert("Erro PiP - Atualmente só o Chrome/Edge 116+ e derivados em desktops suportam essa API experimental. Firefox, Safari e navegadores móveis (Android/iPhone) ainda não têm suporte. Se você usa outro navegador, o erro “Erro PiP” vai aparecer. Se não é o seu caso, reporte o erro."); return; }
 
             pipWindow.document.body.classList.add("pip-mode");
 
