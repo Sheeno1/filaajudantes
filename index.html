@@ -246,6 +246,44 @@ hr {
     }
 }
 
+/* Estilo customizado para a coluna Tour */
+input[type="checkbox"].tourCheck {
+    appearance: none;               /* Remove o estilo padrão */
+    width: 22px;
+    height: 22px;
+    border: 2px solid #181818;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;                  /* permite centralizar o check */
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    background-color: #fff;
+}
+
+input[type="checkbox"].tourCheck:hover {
+    box-shadow: 0 0 6px rgba(0, 123, 255, 0.5);
+    transform: scale(1.1);
+}
+
+input[type="checkbox"].tourCheck:checked {
+    background-color: #138496;
+    border-color: #138496;
+}
+
+/* Centraliza o símbolo dentro da caixa */
+input[type="checkbox"].tourCheck:checked::after {
+    content: "✔";
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+/* Centraliza na célula da tabela */
+td input[type="checkbox"].tourCheck {
+    margin: 0 auto;
+}
+
     </style>
 </head>
 <body>
@@ -262,6 +300,7 @@ hr {
                     <tr>
                         <th>Prioridade</th>
                         <th>Funcionário</th>
+                        <th>Tour</th>
                         <th>Ação</th>
                     </tr>
                 </thead>
@@ -293,6 +332,7 @@ hr {
 
     <script>
         let fila = ["Henrique", "jxg", "Sheeno"];
+        let tourAtivos = [];
         let filaAnterior = [...fila];
         let pipWindow = null;
         const draggableContainer = document.getElementById("draggableContainer");
@@ -305,11 +345,14 @@ hr {
         function renderizar(doc = isPiPActive && pipWindow ? pipWindow.document : document) {
             const corpo = doc.getElementById("corpoTabela");
             corpo.innerHTML = "";
+
             fila.forEach((nome, i) => {
+                const marcado = tourAtivos.includes(nome) ? "checked" : "";
                 corpo.innerHTML += `
                     <tr>
-                        <td>${i+1}</td>
+                        <td>${i + 1}</td>
                         <td>${nome}</td>
+                        <td><input type="checkbox" class="tourCheck" data-nome="${nome}" ${marcado}></td>
                         <td>
                             <div class="action-buttons">
                                 <button class="up" data-action="moverUp" data-index="${i}">⬆️</button>
@@ -321,9 +364,31 @@ hr {
                     </tr>
                 `;
             });
-            doc.getElementById("saida").value = ":r " + fila.join(" - ");
+
+            // Divide em fila normal e tour
+            const filaNormal = fila.filter(nome => !tourAtivos.includes(nome));
+            const filaTour = fila.filter(nome => tourAtivos.includes(nome));
+
+            let saidaTexto = ":r " + filaNormal.join(" - ");
+            if (filaTour.length > 0) saidaTexto += " / Tour: " + filaTour.join(" - ");
+            doc.getElementById("saida").value = saidaTexto;
+
             rebindEvents(doc);
+
+            // Reatribuir eventos aos checkboxes
+            doc.querySelectorAll(".tourCheck").forEach(chk => {
+                chk.onchange = () => {
+                    const nome = chk.dataset.nome;
+                    if (chk.checked) {
+                        if (!tourAtivos.includes(nome)) tourAtivos.push(nome);
+                    } else {
+                        tourAtivos = tourAtivos.filter(n => n !== nome);
+                    }
+                    renderizar(); // atualiza o campo de saída
+                };
+            });
         }
+
 
         function mover(i, dir) {
             salvarEstado();
@@ -333,8 +398,25 @@ hr {
                 renderizar();
             }
         }
-        function remover(i) { salvarEstado(); fila.splice(i, 1); renderizar(); }
-        function editar(i) { salvarEstado(); let novoNome = prompt("Editar nome:", fila[i]); if (novoNome) fila[i] = novoNome; renderizar(); }
+        function remover(i) { 
+            salvarEstado(); 
+            const removido = fila.splice(i, 1)[0];
+            tourAtivos = tourAtivos.filter(n => n !== removido);
+            renderizar(); 
+        }
+       function editar(i) { 
+            salvarEstado(); 
+            let antigo = fila[i];
+            let novoNome = prompt("Editar nome:", antigo);
+            if (novoNome) {
+                fila[i] = novoNome;
+                if (tourAtivos.includes(antigo)) {
+                    tourAtivos = tourAtivos.filter(n => n !== antigo);
+                    tourAtivos.push(novoNome);
+                }
+            }
+            renderizar(); 
+        }
 
         function adicionar(doc = isPiPActive && pipWindow ? pipWindow.document : document) { 
             salvarEstado();
@@ -433,7 +515,7 @@ hr {
         async function openPiP() {
             try {
                 pipWindow = await documentPictureInPicture.requestWindow({ width: 480, height: 520 });
-            } catch (e) { alert("Erro PiP - Atualmente só o Chrome/Edge 116+ e derivados em desktops suportam essa API experimental. Firefox, Safari e navegadores móveis (Android/iPhone) ainda não têm suporte. Se você usa outro navegador, o erro “Erro PiP” vai aparecer. Se não é o seu caso, reporte o erro."); return; }
+            } catch (e) { alert("Erro PiP - Atualmente só o Chrome/Edge 116+ e derivados em desktops suportam essa API experimental. Firefox, Safari, outros navegadores e navegadores móveis (Android/iPhone) ainda não têm suporte. Se você usa outro navegador, o erro “Erro PiP” vai aparecer. Se não é o seu caso, reporte o erro."); return; }
 
             pipWindow.document.body.classList.add("pip-mode");
 
